@@ -58,6 +58,7 @@ using BrushFacePtr = std::shared_ptr<BrushFace>;
 
 struct Brush
 {
+    Brush() {}
 	Brush(const std::vector<BrushFacePtr>& faces);
 
 	void BuildVertices();

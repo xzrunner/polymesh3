@@ -1,5 +1,7 @@
 #pragma once
 
+#include "polymesh3/typedef.h"
+
 #include <SM_Vector.h>
 #include <SM_Plane.h>
 #include <SM_Cube.h>
@@ -29,8 +31,6 @@ struct BrushVertex
 
 }; // BrushVertex
 
-using BrushVertexPtr = std::shared_ptr<BrushVertex>;
-
 struct BrushFace
 {
 	std::string tex_name;
@@ -53,8 +53,6 @@ struct BrushFace
 	bool AddVertex(const BrushVertexPtr& v);
 
 }; // BrushFace
-
-using BrushFacePtr = std::shared_ptr<BrushFace>;
 
 struct Brush
 {

@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\include\polymesh3\Brush.h" />
     <ClInclude Include="..\..\..\include\polymesh3\MeshBuilder.h" />
+    <ClInclude Include="..\..\..\include\polymesh3\typedef.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\Brush.cpp" />

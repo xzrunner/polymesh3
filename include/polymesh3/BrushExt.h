@@ -28,7 +28,7 @@ struct BrushEdge
 
 }; // BrushEdge
 
-struct BrushGroup
+struct BrushPart
 {
     std::string name;
 
@@ -38,6 +38,6 @@ struct BrushGroup
     std::vector<BrushEdgePtr>   edges;
     std::vector<BrushFacePtr>   faces;
 
-}; // BrushGroup
+}; // BrushPart
 
 }

@@ -2,7 +2,6 @@
 
 #include "polymesh3/typedef.h"
 
-#include <string>
 #include <vector>
 
 namespace pm3
@@ -30,8 +29,6 @@ struct BrushEdge
 
 struct BrushPart
 {
-    std::string name;
-
     std::shared_ptr<Brush> parent = nullptr;
 
     std::vector<BrushVertexPtr> vertices;

@@ -25,11 +25,11 @@ namespace pm3
 // class BrushFace
 //////////////////////////////////////////////////////////////////////////
 
-void BrushFace::SortVertices()
+void BrushFace::SortVertices(const Brush& brush)
 {
 	sm::vec3 center;
 	for (auto& v : vertices) {
-		center += v->pos;
+		center += brush.vertices[v];
 	}
 	center /= static_cast<float>(vertices.size());
 
@@ -38,16 +38,19 @@ void BrushFace::SortVertices()
 		float smallest_angle = -1;
 		int   smallest_idx = -1;
 
-		sm::vec3 a = (vertices[i]->pos - center).Normalized();
-		sm::Plane p(vertices[i]->pos, center, center + plane.normal);
+        auto& pos = brush.vertices[vertices[i]];
+
+		sm::vec3 a = (pos - center).Normalized();
+		sm::Plane p(pos, center, center + plane.normal);
 		for (size_t j = i + 1; j < vertices.size(); ++j)
 		{
-			float dis = p.normal.Dot(vertices[j]->pos) + p.dist;
+            auto& pos = brush.vertices[vertices[j]];
+			float dis = p.normal.Dot(pos) + p.dist;
 			// black
 			if (dis < -SM_LARGE_EPSILON) {
 				;
 			} else {
-				sm::vec3 b = (vertices[j]->pos - center).Normalized();
+				sm::vec3 b = (pos - center).Normalized();
 				float angle = a.Dot(b);
 				if (angle > smallest_angle) {
 					smallest_angle = angle;
@@ -69,16 +72,15 @@ void BrushFace::SortVertices()
 	}
 
 	// fix back faces
-	assert(vertices.size() > 2);
-	sm::vec3 normal = (vertices[1]->pos - vertices[0]->pos).Cross(vertices[2]->pos - vertices[0]->pos).Normalized();
+    sm::vec3 normal = CalcNormal(brush);
 	if (normal.Dot(plane.normal) < -SM_LARGE_EPSILON) {
 		std::reverse(std::begin(vertices), std::end(vertices));
 	}
 }
 
-void BrushFace::InitTexCoordSys()
+void BrushFace::InitTexCoordSys(const Brush& brush)
 {
-	sm::vec3 normal = (vertices[1]->pos - vertices[0]->pos).Cross(vertices[2]->pos - vertices[0]->pos).Normalized();
+    sm::vec3 normal = CalcNormal(brush);
 
 	size_t best_idx = 0;
 	float  best_dot = 0;
@@ -114,20 +116,35 @@ sm::vec2 BrushFace::CalcTexCoords(const sm::vec3& pos, float tex_w, float tex_h)
 	return ret;
 }
 
-bool BrushFace::AddVertex(const BrushVertexPtr& v)
+bool BrushFace::HasSamePos(const Brush& brush, const sm::vec3& pos) const
 {
-	for (auto& vert : vertices) {
-		if (sm::dis_square_pos3_to_pos3(vert->pos, v->pos) < SM_LARGE_EPSILON) {
-			return false;
-		}
-	}
-	vertices.push_back(v);
-	return true;
+    for (auto& vert : vertices) {
+        if (sm::dis_square_pos3_to_pos3(brush.vertices[vert], pos) < SM_LARGE_EPSILON) {
+            return true;
+        }
+    }
+    return false;
+}
+
+sm::vec3 BrushFace::CalcNormal(const Brush& brush) const
+{
+    assert(vertices.size() > 2);
+    auto& p0 = brush.vertices[vertices[0]];
+    auto& p1 = brush.vertices[vertices[1]];
+    auto& p2 = brush.vertices[vertices[2]];
+    return (p1 - p0).Cross(p2 - p0).Normalized();
 }
 
 //////////////////////////////////////////////////////////////////////////
 // class Brush
 //////////////////////////////////////////////////////////////////////////
+
+Brush::Brush(const Brush& brush)
+    : vertices(brush.vertices)
+    , faces(brush.faces)
+{
+    BuildGeometry();
+}
 
 Brush::Brush(const std::vector<BrushFacePtr>& faces)
 	: faces(faces)
@@ -160,12 +177,16 @@ void Brush::BuildVertices()
 
 				if (legal)
 				{
-					auto vertex = std::make_shared<BrushVertex>(v);
-					bool add0 = faces[i]->AddVertex(vertex);
-					bool add1 = faces[j]->AddVertex(vertex);
-					bool add2 = faces[k]->AddVertex(vertex);
-					if (add0 || add1 || add2) {
-						vertices.push_back(vertex);
+					bool find0 = faces[i]->HasSamePos(*this, v);
+					bool find1 = faces[j]->HasSamePos(*this, v);
+					bool find2 = faces[k]->HasSamePos(*this, v);
+					if (!find0 || !find1 || !find2)
+                    {
+                        const int idx = vertices.size();
+						vertices.push_back(v);
+                        if (!find0) { faces[i]->vertices.push_back(idx); }
+                        if (!find1) { faces[j]->vertices.push_back(idx); }
+                        if (!find2) { faces[k]->vertices.push_back(idx); }
 					}
 				}
 			}
@@ -176,8 +197,8 @@ void Brush::BuildVertices()
 	for (auto& f : faces)
 	{
 		assert(f->vertices.size() >= 3);
-		f->SortVertices();
-		f->InitTexCoordSys();
+		f->SortVertices(*this);
+		f->InitTexCoordSys(*this);
 	}
 }
 
@@ -186,12 +207,12 @@ void Brush::BuildGeometry()
 	std::vector<std::vector<sm::vec3>> faces_pos;
 	faces_pos.reserve(faces.size());
 	for (auto& face : faces) {
-		std::vector<sm::vec3> vertices;
-		vertices.reserve(face->vertices.size());
+		std::vector<sm::vec3> vs;
+        vs.reserve(face->vertices.size());
 		for (auto& vert : face->vertices) {
-			vertices.push_back(vert->pos);
+            vs.push_back(vertices[vert]);
 		}
-		faces_pos.push_back(vertices);
+		faces_pos.push_back(vs);
 	}
 
 	geometry = std::make_shared<he::Polyhedron>(faces_pos);

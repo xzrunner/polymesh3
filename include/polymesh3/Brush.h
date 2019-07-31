@@ -22,21 +22,14 @@ struct TexCoordSystem
 
 }; // TexCoordSystem
 
-struct BrushVertex
-{
-	BrushVertex(const sm::vec3& pos)
-		: pos(pos) {}
-
-	sm::vec3 pos;
-
-}; // BrushVertex
+struct Brush;
 
 struct BrushFace
 {
 	std::string tex_name;
 
 	sm::Plane plane;
-	std::vector<BrushVertexPtr> vertices;
+    std::vector<uint32_t> vertices;
 
 	// texcoords
 	TexCoordSystem tc_sys;
@@ -44,19 +37,23 @@ struct BrushFace
 	float    angle = 0;
 	sm::vec2 scale;
 
-	void SortVertices();
+	void SortVertices(const Brush& brush);
 
-	void InitTexCoordSys();
+	void InitTexCoordSys(const Brush& brush);
 
 	sm::vec2 CalcTexCoords(const sm::vec3& pos, float tex_w, float tex_h) const;
 
-	bool AddVertex(const BrushVertexPtr& v);
+    bool HasSamePos(const Brush& brush, const sm::vec3& pos) const;
+
+private:
+    sm::vec3 CalcNormal(const Brush& brush) const;
 
 }; // BrushFace
 
 struct Brush
 {
     Brush() {}
+    Brush(const Brush& brush);
 	Brush(const std::vector<BrushFacePtr>& faces);
 
 	void BuildVertices();
@@ -64,8 +61,8 @@ struct Brush
 	void BuildGeometry();
 	void RebuildGeometry(const sm::cube& world_bound);
 
-	std::vector<BrushVertexPtr> vertices;
-	std::vector<BrushFacePtr>   faces;
+    std::vector<sm::vec3>     vertices;
+	std::vector<BrushFacePtr> faces;
 
 	he::PolyhedronPtr geometry = nullptr;
 

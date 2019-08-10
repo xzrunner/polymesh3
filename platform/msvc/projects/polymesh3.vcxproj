@@ -11,12 +11,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\include\polymesh3\Brush.h" />
+    <ClInclude Include="..\..\..\include\polymesh3\Geometry.h" />
     <ClInclude Include="..\..\..\include\polymesh3\MeshBuilder.h" />
     <ClInclude Include="..\..\..\include\polymesh3\typedef.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\source\Brush.cpp" />
+    <ClCompile Include="..\..\..\source\Geometry.cpp" />
     <ClCompile Include="..\..\..\source\MeshBuilder.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

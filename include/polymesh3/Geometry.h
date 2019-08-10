@@ -7,6 +7,7 @@
 #include <halfedge/typedef.h>
 
 #include <vector>
+#include <map>
 #include <memory>
 
 namespace pm3
@@ -63,6 +64,26 @@ struct Face
 
 }; // Face
 
+enum class GroupType
+{
+    Points,
+    Vertices,
+    Edges,
+    Face,
+};
+
+struct Group
+{
+    std::string name;
+
+    GroupType type = GroupType::Face;
+
+    std::vector<size_t> items;
+
+    void Clear() { items.clear(); }
+
+}; // Group
+
 class Polytope
 {
 public:
@@ -81,8 +102,15 @@ public:
 
     auto& GetHalfedge() const { return m_halfedge; }
 
+    void AddGroup(const std::shared_ptr<Group>& group);
+    std::shared_ptr<Group> QueryGroup(const std::string& name) const;
+    //void RenameGroup(const std::string& src, const std::string& dst);
+
+    void Combine(const Polytope& poly);
+
 private:
     void CopyFaces(const std::vector<FacePtr>& faces);
+    void CopyGroups(const Polytope& poly);
 
     void BuildVertices();
     void BuildHalfedge();
@@ -99,6 +127,8 @@ private:
     std::vector<FacePtr>  m_faces;
 
     he::PolyhedronPtr m_halfedge = nullptr;
+
+    std::map<std::string, std::shared_ptr<Group>> m_groups;
 
 }; // Polytope
 

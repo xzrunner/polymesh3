@@ -55,15 +55,19 @@ Polytope::Polytope(const std::vector<FacePtr>& faces)
 }
 
 Polytope::Polytope(const Polytope& poly)
+    : m_points(poly.m_points)
 {
-    operator = (poly);
+    CopyFaces(poly.m_faces);
     CopyGroups(poly);
 
+    BuildHalfedge();
 }
 
 Polytope& Polytope::operator = (const Polytope& poly)
 {
     m_points = poly.m_points;
+
+    m_faces.clear();
     CopyFaces(poly.m_faces);
 
     CopyGroups(poly);

@@ -88,11 +88,13 @@ class Polytope
 {
 public:
     Polytope() {}
-    Polytope(const std::vector<FacePtr>& faces);
     Polytope(const Polytope& poly);
+    Polytope(const std::vector<FacePtr>& faces);
+    Polytope(const he::PolyhedronPtr& halfedge);
     Polytope& operator = (const Polytope& poly);
 
     void Build();
+    void BuildFromHalfedge();
 
     auto& Points() { return m_points; }
     auto& Points() const { return m_points; }

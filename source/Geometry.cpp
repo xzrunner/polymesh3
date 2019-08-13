@@ -47,13 +47,6 @@ sm::vec2 TextureMapping::CalcTexCoords(const sm::vec3& pos, float tex_w, float t
 // class Polytope
 //////////////////////////////////////////////////////////////////////////
 
-Polytope::Polytope(const std::vector<FacePtr>& faces)
-{
-    CopyFaces(faces);
-
-    Build();
-}
-
 Polytope::Polytope(const Polytope& poly)
     : m_points(poly.m_points)
 {
@@ -61,6 +54,19 @@ Polytope::Polytope(const Polytope& poly)
     CopyGroups(poly);
 
     BuildHalfedge();
+}
+
+Polytope::Polytope(const std::vector<FacePtr>& faces)
+{
+    CopyFaces(faces);
+
+    Build();
+}
+
+Polytope::Polytope(const he::PolyhedronPtr& halfedge)
+    : m_halfedge(halfedge)
+{
+    BuildFromHalfedge();
 }
 
 Polytope& Polytope::operator = (const Polytope& poly)
@@ -81,6 +87,49 @@ void Polytope::Build()
 {
     BuildVertices();
     BuildHalfedge();
+}
+
+void Polytope::BuildFromHalfedge()
+{
+    m_points.clear();
+    m_faces.clear();
+    m_groups.clear();       // todo reset groups
+
+    auto& vertices = m_halfedge->GetVertices();
+    m_points.reserve(vertices.Size());
+    std::map<he::Vertex*, size_t> vert2idx;
+    auto curr_vert = vertices.Head();
+    auto first_vert = curr_vert;
+    do {
+        vert2idx.insert({ curr_vert, m_points.size() });
+        m_points.push_back(curr_vert->position);
+
+        curr_vert = curr_vert->linked_next;
+    } while (curr_vert != first_vert);
+
+    auto& faces = m_halfedge->GetFaces();
+    m_faces.reserve(faces.Size());
+    auto curr_face = faces.Head();
+    auto first_face = curr_face;
+    do {
+        auto face = std::make_shared<Face>();
+        he::face_to_plane(*curr_face, face->plane);
+        m_faces.push_back(face);
+
+        auto curr_edge = curr_face->edge;
+        auto first_edge = curr_edge;
+        do {
+            auto itr = vert2idx.find(curr_edge->vert);
+            assert(itr != vert2idx.end());
+            face->points.push_back(itr->second);
+
+            curr_edge = curr_edge->next;
+        } while (curr_edge != first_edge);
+
+        // todo tex_map
+
+        curr_face = curr_face->linked_next;
+    } while (curr_face != first_face);
 }
 
 void Polytope::SetFaces(const std::vector<FacePtr>& faces)

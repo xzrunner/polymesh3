@@ -123,7 +123,7 @@ void Polytope::BuildFromHalfedge()
             assert(itr != vert2idx.end());
             face->points.push_back(itr->second);
 
-            curr_edge = curr_edge->next;
+            curr_edge = curr_edge->prev;
         } while (curr_edge != first_edge);
 
         // todo tex_map
@@ -261,18 +261,26 @@ void Polytope::BuildVertices()
 
 void Polytope::BuildHalfedge()
 {
-	std::vector<std::vector<sm::vec3>> faces_pos;
-	faces_pos.reserve(m_faces.size());
-	for (auto& face : m_faces) {
-		std::vector<sm::vec3> vs;
-        vs.reserve(face->points.size());
-		for (auto& p : face->points) {
-            vs.push_back(m_points[p]);
-		}
-		faces_pos.push_back(vs);
+	std::vector<std::vector<sm::vec3>> polylines;
+	polylines.reserve(m_faces.size());
+	for (auto& face : m_faces)
+    {
+        if (face->points.empty()) {
+            continue;
+        }
+
+        std::vector<sm::vec3> polyline;
+
+        auto sz = face->points.size();
+        polyline.reserve(sz);
+        for (int i = sz - 1; i >= 0; --i) {
+            polyline.push_back(m_points[face->points[i]]);
+        }
+
+		polylines.push_back(polyline);
 	}
 
-	m_halfedge = std::make_shared<he::Polyhedron>(faces_pos);
+	m_halfedge = std::make_shared<he::Polyhedron>(polylines);
 }
 
 bool Polytope::IsPosExistInFace(const sm::vec3& pos, const Face& face) const

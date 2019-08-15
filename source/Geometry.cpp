@@ -51,7 +51,6 @@ Polytope::Polytope(const Polytope& poly)
     : m_points(poly.m_points)
 {
     CopyFaces(poly.m_faces);
-    CopyGroups(poly);
 
     BuildHalfedge();
 }
@@ -76,8 +75,6 @@ Polytope& Polytope::operator = (const Polytope& poly)
     m_faces.clear();
     CopyFaces(poly.m_faces);
 
-    CopyGroups(poly);
-
     BuildHalfedge();
 
     return *this;
@@ -93,7 +90,6 @@ void Polytope::BuildFromHalfedge()
 {
     m_points.clear();
     m_faces.clear();
-    m_groups.clear();       // todo reset groups
 
     auto& vertices = m_halfedge->GetVertices();
     m_points.reserve(vertices.Size());
@@ -140,28 +136,6 @@ void Polytope::SetFaces(const std::vector<FacePtr>& faces)
     Build();
 }
 
-void Polytope::AddGroup(const std::shared_ptr<Group>& group)
-{
-    auto itr = m_groups.insert({ group->name, group });
-    assert(itr.second);
-}
-
-std::shared_ptr<Group> Polytope::QueryGroup(const std::string& name) const
-{
-    auto itr = m_groups.find(name);
-    return itr == m_groups.end() ? nullptr : itr->second;
-}
-
-//void Polytope::RenameGroup(const std::string& src, const std::string& dst)
-//{
-//    auto itr = m_groups.find(src);
-//    assert(itr != m_groups.end() && itr->second->name == src);
-//    auto group = itr->second;
-//    m_groups.erase(itr);
-//    group->name = dst;
-//    AddGroup(group);
-//}
-
 void Polytope::Combine(const Polytope& poly)
 {
     size_t offset = m_points.size();
@@ -179,19 +153,6 @@ void Polytope::Combine(const Polytope& poly)
     }
 
     BuildHalfedge();
-
-    for (auto& group : poly.m_groups)
-    {
-        auto itr = m_groups.find(group.second->name);
-        assert(itr == m_groups.end());
-        assert(group.second->type == pm3::GroupType::Face);
-        size_t offset = m_faces.size();
-        auto new_group = std::make_shared<pm3::Group>(*group.second);
-        for (auto& i : new_group->items) {
-            i += offset;
-        }
-        m_groups.insert({ new_group->name, new_group});
-    }
 }
 
 void Polytope::CopyFaces(const std::vector<FacePtr>& faces)
@@ -199,14 +160,6 @@ void Polytope::CopyFaces(const std::vector<FacePtr>& faces)
     m_faces.reserve(faces.size());
     for (auto& f : faces) {
         m_faces.push_back(std::make_shared<Face>(*f));
-    }
-}
-
-void Polytope::CopyGroups(const Polytope& poly)
-{
-    m_groups.clear();
-    for (auto& itr : poly.m_groups) {
-        m_groups.insert({ itr.first, std::make_shared<Group>(*itr.second)});
     }
 }
 

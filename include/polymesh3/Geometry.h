@@ -74,7 +74,7 @@ public:
     Polytope& operator = (const Polytope& poly);
 
     void Build();
-    void BuildFromHalfedge();
+    void BuildFromGeo();
 
     auto& Points() { return m_points; }
     auto& Points() const { return m_points; }
@@ -82,7 +82,7 @@ public:
 
     void SetFaces(const std::vector<FacePtr>& faces);
 
-    auto& GetHalfedge() const { return m_halfedge; }
+    auto& GetGeometry() const { return m_geo; }
 
     void Combine(const Polytope& poly);
 
@@ -103,7 +103,7 @@ private:
     std::vector<sm::vec3> m_points;
     std::vector<FacePtr>  m_faces;
 
-    he::PolyhedronPtr m_halfedge = nullptr;
+    he::PolyhedronPtr m_geo = nullptr;
 
 }; // Polytope
 

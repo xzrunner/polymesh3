@@ -63,9 +63,9 @@ Polytope::Polytope(const std::vector<FacePtr>& faces)
 }
 
 Polytope::Polytope(const he::PolyhedronPtr& halfedge)
-    : m_halfedge(halfedge)
+    : m_geo(halfedge)
 {
-    BuildFromHalfedge();
+    BuildFromGeo();
 }
 
 Polytope& Polytope::operator = (const Polytope& poly)
@@ -86,12 +86,12 @@ void Polytope::Build()
     BuildHalfedge();
 }
 
-void Polytope::BuildFromHalfedge()
+void Polytope::BuildFromGeo()
 {
     m_points.clear();
     m_faces.clear();
 
-    auto& vertices = m_halfedge->GetVertices();
+    auto& vertices = m_geo->GetVertices();
     m_points.reserve(vertices.Size());
     std::map<he::Vertex*, size_t> vert2idx;
     auto curr_vert = vertices.Head();
@@ -103,7 +103,7 @@ void Polytope::BuildFromHalfedge()
         curr_vert = curr_vert->linked_next;
     } while (curr_vert != first_vert);
 
-    auto& faces = m_halfedge->GetFaces();
+    auto& faces = m_geo->GetFaces();
     m_faces.reserve(faces.Size());
     auto curr_face = faces.Head();
     auto first_face = curr_face;
@@ -233,7 +233,7 @@ void Polytope::BuildHalfedge()
 		polylines.push_back(polyline);
 	}
 
-	m_halfedge = std::make_shared<he::Polyhedron>(polylines);
+	m_geo = std::make_shared<he::Polyhedron>(polylines);
 }
 
 bool Polytope::IsPosExistInFace(const sm::vec3& pos, const Face& face) const

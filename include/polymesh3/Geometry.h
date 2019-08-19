@@ -70,6 +70,8 @@ public:
     Polytope() {}
     Polytope(const Polytope& poly);
     Polytope(const std::vector<FacePtr>& faces);
+    Polytope(const std::vector<sm::vec3>& points,
+        const std::vector<FacePtr>& faces);
     Polytope(const he::PolyhedronPtr& halfedge);
     Polytope& operator = (const Polytope& poly);
 

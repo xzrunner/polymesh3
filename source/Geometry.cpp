@@ -62,6 +62,15 @@ Polytope::Polytope(const std::vector<FacePtr>& faces)
     Build();
 }
 
+Polytope::Polytope(const std::vector<sm::vec3>& points,
+                   const std::vector<FacePtr>& faces)
+    : m_points(points)
+{
+    CopyFaces(faces);
+
+    BuildHalfedge();
+}
+
 Polytope::Polytope(const he::PolyhedronPtr& halfedge)
     : m_geo(halfedge)
 {

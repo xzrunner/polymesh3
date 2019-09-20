@@ -223,26 +223,16 @@ void Polytope::BuildVertices()
 
 void Polytope::BuildHalfedge()
 {
-	std::vector<std::vector<sm::vec3>> polylines;
-	polylines.reserve(m_faces.size());
-	for (auto& face : m_faces)
+    std::vector<std::vector<size_t>> faces;
+    faces.reserve(m_faces.size());
+    for (auto& face : m_faces)
     {
-        if (face->points.empty()) {
-            continue;
-        }
+        auto points = face->points;
+        std::reverse(points.begin(), points.end());
+        faces.push_back(points);
+    }
 
-        std::vector<sm::vec3> polyline;
-
-        auto sz = face->points.size();
-        polyline.reserve(sz);
-        for (int i = sz - 1; i >= 0; --i) {
-            polyline.push_back(m_points[face->points[i]]);
-        }
-
-		polylines.push_back(polyline);
-	}
-
-	m_geo = std::make_shared<he::Polyhedron>(polylines);
+	m_geo = std::make_shared<he::Polyhedron>(m_points, faces);
 }
 
 bool Polytope::IsPosExistInFace(const sm::vec3& pos, const Face& face) const

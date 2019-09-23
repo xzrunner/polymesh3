@@ -5,10 +5,10 @@
 namespace pm3
 {
 
-typedef size_t                    PointIndex;
-typedef std::pair<size_t, size_t> EdgeIndex;
+struct Point;
+using PointPtr = std::shared_ptr<Point>;
 
-typedef std::shared_ptr<PointIndex> PointPtr;
+typedef std::pair<size_t, size_t>   EdgeIndex;
 typedef std::shared_ptr<EdgeIndex>  EdgePtr;
 
 struct Face;

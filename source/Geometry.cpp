@@ -48,8 +48,8 @@ sm::vec2 TextureMapping::CalcTexCoords(const sm::vec3& pos, float tex_w, float t
 //////////////////////////////////////////////////////////////////////////
 
 Polytope::Polytope(const Polytope& poly)
-    : m_points(poly.m_points)
 {
+    CopyPoints(poly.m_points);
     CopyFaces(poly.m_faces);
 
     BuildHalfedge();
@@ -59,13 +59,14 @@ Polytope::Polytope(const std::vector<FacePtr>& faces)
 {
     CopyFaces(faces);
 
-    Build();
+    BuildVertices();
+    BuildHalfedge();
 }
 
-Polytope::Polytope(const std::vector<sm::vec3>& points,
+Polytope::Polytope(const std::vector<PointPtr>& points,
                    const std::vector<FacePtr>& faces)
-    : m_points(points)
 {
+    CopyPoints(points);
     CopyFaces(faces);
 
     BuildHalfedge();
@@ -79,7 +80,8 @@ Polytope::Polytope(const he::PolyhedronPtr& halfedge)
 
 Polytope& Polytope::operator = (const Polytope& poly)
 {
-    m_points = poly.m_points;
+    m_points.clear();
+    CopyPoints(poly.m_points);
 
     m_faces.clear();
     CopyFaces(poly.m_faces);
@@ -107,7 +109,11 @@ void Polytope::BuildFromGeo()
     auto first_vert = curr_vert;
     do {
         vert2idx.insert({ curr_vert, m_points.size() });
-        m_points.push_back(curr_vert->position);
+
+        auto point = std::make_shared<Point>();
+        point->pos = curr_vert->position;
+        point->topo_id = curr_vert->id;
+        m_points.push_back(point);
 
         curr_vert = curr_vert->linked_next;
     } while (curr_vert != first_vert);
@@ -119,6 +125,7 @@ void Polytope::BuildFromGeo()
     do {
         auto face = std::make_shared<Face>();
         he::face_to_plane(*curr_face, face->plane);
+        face->topo_id = curr_face->id;
         m_faces.push_back(face);
 
         auto curr_edge = curr_face->edge;
@@ -128,7 +135,7 @@ void Polytope::BuildFromGeo()
             assert(itr != vert2idx.end());
             face->points.push_back(itr->second);
 
-            curr_edge = curr_edge->prev;
+            curr_edge = curr_edge->next;
         } while (curr_edge != first_edge);
 
         // todo tex_map
@@ -149,7 +156,11 @@ void Polytope::Combine(const Polytope& poly)
 {
     size_t offset = m_points.size();
 
-    std::copy(poly.m_points.begin(), poly.m_points.end(), std::back_inserter(m_points));
+    m_points.reserve(m_points.size() + poly.m_points.size());
+    for (auto& p : poly.m_points) {
+        auto point = std::make_shared<Point>(*p);
+        m_points.push_back(point);
+    }
 
     m_faces.reserve(m_faces.size() + poly.m_faces.size());
     for (auto& f : poly.m_faces)
@@ -162,6 +173,14 @@ void Polytope::Combine(const Polytope& poly)
     }
 
     BuildHalfedge();
+}
+
+void Polytope::CopyPoints(const std::vector<PointPtr>& points)
+{
+    m_points.reserve(points.size());
+    for (auto& p : points) {
+        m_points.push_back(std::make_shared<Point>(*p));
+    }
 }
 
 void Polytope::CopyFaces(const std::vector<FacePtr>& faces)
@@ -202,7 +221,9 @@ void Polytope::BuildVertices()
 					if (!find0 || !find1 || !find2)
                     {
                         const int idx = m_points.size();
-                        m_points.push_back(v);
+                        auto point = std::make_shared<Point>();
+                        point->pos = v;
+                        m_points.push_back(point);
                         if (!find0) { m_faces[i]->points.push_back(idx); }
                         if (!find1) { m_faces[j]->points.push_back(idx); }
                         if (!find2) { m_faces[k]->points.push_back(idx); }
@@ -223,22 +244,51 @@ void Polytope::BuildVertices()
 
 void Polytope::BuildHalfedge()
 {
-    std::vector<std::vector<size_t>> faces;
+    std::vector<std::pair<int, sm::vec3>> vertices;
+    vertices.reserve(m_points.size());
+    for (auto& point : m_points) {
+        vertices.push_back({ point->topo_id, point->pos });
+    }
+
+    std::vector< std::pair<int, std::vector<size_t>>> faces;
     faces.reserve(m_faces.size());
     for (auto& face : m_faces)
     {
         auto points = face->points;
         std::reverse(points.begin(), points.end());
-        faces.push_back(points);
+        faces.push_back({ face->topo_id, points });
     }
 
-	m_geo = std::make_shared<he::Polyhedron>(m_points, faces);
+	m_geo = std::make_shared<he::Polyhedron>(vertices, faces);
+
+    assert(m_points.size() == m_geo->GetVertices().Size());
+    auto first_vert = m_geo->GetVertices().Head();
+    auto curr_vert = first_vert;
+    size_t idx_vert = 0;
+    do {
+        assert(m_points[idx_vert]->pos == curr_vert->position);
+        m_points[idx_vert]->topo_id = curr_vert->id;
+
+        ++idx_vert;
+        curr_vert = curr_vert->linked_next;
+    } while (curr_vert != first_vert);
+
+    assert(m_faces.size() == m_geo->GetFaces().Size());
+    auto first_face = m_geo->GetFaces().Head();
+    auto curr_face = first_face;
+    size_t idx_face = 0;
+    do {
+        m_faces[idx_face]->topo_id = curr_face->id;
+
+        ++idx_face;
+        curr_face = curr_face->linked_next;
+    } while (curr_face != first_face);
 }
 
 bool Polytope::IsPosExistInFace(const sm::vec3& pos, const Face& face) const
 {
     for (auto& p : face.points) {
-        if (sm::dis_square_pos3_to_pos3(m_points[p], pos) < SM_LARGE_EPSILON) {
+        if (sm::dis_square_pos3_to_pos3(m_points[p]->pos, pos) < SM_LARGE_EPSILON) {
             return true;
         }
     }
@@ -249,7 +299,7 @@ void Polytope::SortFacePoints(Face& face)
 {
 	sm::vec3 center;
 	for (auto& v : face.points) {
-		center += m_points[v];
+		center += m_points[v]->pos;
 	}
 	center /= static_cast<float>(face.points.size());
 
@@ -258,13 +308,13 @@ void Polytope::SortFacePoints(Face& face)
 		float smallest_angle = -1;
 		int   smallest_idx = -1;
 
-        auto& pos = m_points[face.points[i]];
+        auto& pos = m_points[face.points[i]]->pos;
 
 		sm::vec3 a = (pos - center).Normalized();
 		sm::Plane p(pos, center, center + face.plane.normal);
 		for (size_t j = i + 1; j < face.points.size(); ++j)
 		{
-            auto& pos = m_points[face.points[j]];
+            auto& pos = m_points[face.points[j]]->pos;
 			float dis = p.normal.Dot(pos) + p.dist;
 			// black
 			if (dis < -SM_LARGE_EPSILON) {
@@ -321,9 +371,9 @@ void Polytope::InitFaceTexCoordSys(Face& face)
 sm::vec3 Polytope::CalcFaceNormal(const Face& face) const
 {
     assert(face.points.size() > 2);
-    auto& p0 = m_points[face.points[0]];
-    auto& p1 = m_points[face.points[1]];
-    auto& p2 = m_points[face.points[2]];
+    auto& p0 = m_points[face.points[0]]->pos;
+    auto& p1 = m_points[face.points[1]]->pos;
+    auto& p2 = m_points[face.points[2]]->pos;
     return (p1 - p0).Cross(p2 - p0).Normalized();
 }
 

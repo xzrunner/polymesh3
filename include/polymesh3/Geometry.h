@@ -17,22 +17,9 @@ struct Point
 {
     sm::vec3 pos;
 
+    int topo_id = -1;
+
 }; // Point
-
-struct Vertex
-{
-    int face_num  = -1;
-    int point_num = -1;
-    //sm::vec3 normal;
-
-}; // Vertex
-
-struct Edge
-{
-    int begin = -1;
-    int end   = -1;
-
-}; // Edge
 
 struct TexCoordSystem
 {
@@ -62,6 +49,8 @@ struct Face
 
     TextureMapping tex_map;
 
+    int topo_id = -1;
+
 }; // Face
 
 class Polytope
@@ -70,8 +59,7 @@ public:
     Polytope() {}
     Polytope(const Polytope& poly);
     Polytope(const std::vector<FacePtr>& faces);
-    Polytope(const std::vector<sm::vec3>& points,
-        const std::vector<FacePtr>& faces);
+    Polytope(const std::vector<PointPtr>& points, const std::vector<FacePtr>& faces);
     Polytope(const he::PolyhedronPtr& halfedge);
     Polytope& operator = (const Polytope& poly);
 
@@ -89,6 +77,7 @@ public:
     void Combine(const Polytope& poly);
 
 private:
+    void CopyPoints(const std::vector<PointPtr>& points);
     void CopyFaces(const std::vector<FacePtr>& faces);
 
     void BuildVertices();
@@ -102,7 +91,7 @@ private:
     sm::vec3 CalcFaceNormal(const Face& face) const;
 
 private:
-    std::vector<sm::vec3> m_points;
+    std::vector<PointPtr> m_points;
     std::vector<FacePtr>  m_faces;
 
     he::PolyhedronPtr m_geo = nullptr;

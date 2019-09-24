@@ -135,7 +135,7 @@ void Polytope::BuildFromGeo()
             assert(itr != vert2idx.end());
             face->points.push_back(itr->second);
 
-            curr_edge = curr_edge->next;
+            curr_edge = curr_edge->prev;
         } while (curr_edge != first_edge);
 
         // todo tex_map

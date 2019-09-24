@@ -4,6 +4,7 @@
 
 #include <SM_Vector.h>
 #include <SM_Plane.h>
+#include <halfedge/TopoID.h>
 #include <halfedge/typedef.h>
 
 #include <vector>
@@ -16,8 +17,8 @@ namespace pm3
 struct Point
 {
     sm::vec3 pos;
-
-    int topo_id = -1;
+    
+    he::TopoID topo_id;
 
 }; // Point
 
@@ -49,7 +50,7 @@ struct Face
 
     TextureMapping tex_map;
 
-    int topo_id = -1;
+    he::TopoID topo_id;
 
 }; // Face
 

@@ -112,7 +112,7 @@ void Polytope::BuildFromGeo()
 
         auto point = std::make_shared<Point>();
         point->pos = curr_vert->position;
-        point->topo_id = curr_vert->id;
+        point->topo_id = curr_vert->ids;
         m_points.push_back(point);
 
         curr_vert = curr_vert->linked_next;
@@ -125,7 +125,7 @@ void Polytope::BuildFromGeo()
     do {
         auto face = std::make_shared<Face>();
         he::face_to_plane(*curr_face, face->plane);
-        face->topo_id = curr_face->id;
+        face->topo_id = curr_face->ids;
         m_faces.push_back(face);
 
         auto curr_edge = curr_face->edge;
@@ -244,13 +244,13 @@ void Polytope::BuildVertices()
 
 void Polytope::BuildHalfedge()
 {
-    std::vector<std::pair<int, sm::vec3>> vertices;
+    std::vector<std::pair<he::TopoID, sm::vec3>> vertices;
     vertices.reserve(m_points.size());
     for (auto& point : m_points) {
         vertices.push_back({ point->topo_id, point->pos });
     }
 
-    std::vector< std::pair<int, std::vector<size_t>>> faces;
+    std::vector<std::pair<he::TopoID, std::vector<size_t>>> faces;
     faces.reserve(m_faces.size());
     for (auto& face : m_faces)
     {
@@ -267,7 +267,7 @@ void Polytope::BuildHalfedge()
     size_t idx_vert = 0;
     do {
         assert(m_points[idx_vert]->pos == curr_vert->position);
-        m_points[idx_vert]->topo_id = curr_vert->id;
+        m_points[idx_vert]->topo_id = curr_vert->ids;
 
         ++idx_vert;
         curr_vert = curr_vert->linked_next;
@@ -278,7 +278,7 @@ void Polytope::BuildHalfedge()
     auto curr_face = first_face;
     size_t idx_face = 0;
     do {
-        m_faces[idx_face]->topo_id = curr_face->id;
+        m_faces[idx_face]->topo_id = curr_face->ids;
 
         ++idx_face;
         curr_face = curr_face->linked_next;

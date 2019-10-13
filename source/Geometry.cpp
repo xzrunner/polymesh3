@@ -103,6 +103,9 @@ void Polytope::BuildFromGeo()
     m_faces.clear();
 
     auto& vertices = m_geo->GetVertices();
+    if (vertices.Size() == 0) {
+        return;
+    }
     m_points.reserve(vertices.Size());
     std::map<he::Vertex*, size_t> vert2idx;
     auto curr_vert = vertices.Head();

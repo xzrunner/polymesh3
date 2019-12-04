@@ -16,8 +16,13 @@ namespace pm3
 
 struct Point
 {
+    Point(const sm::vec3& pos, const he::TopoID id = he::TopoID())
+        : pos(pos), topo_id(id)
+    {
+    }
+
     sm::vec3 pos;
-    
+
     he::TopoID topo_id;
 
 }; // Point

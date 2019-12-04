@@ -113,9 +113,7 @@ void Polytope::BuildFromGeo()
     do {
         vert2idx.insert({ curr_vert, m_points.size() });
 
-        auto point = std::make_shared<Point>();
-        point->pos = curr_vert->position;
-        point->topo_id = curr_vert->ids;
+        auto point = std::make_shared<Point>(curr_vert->position, curr_vert->ids);
         m_points.push_back(point);
 
         curr_vert = curr_vert->linked_next;
@@ -224,9 +222,7 @@ void Polytope::BuildVertices()
 					if (!find0 || !find1 || !find2)
                     {
                         const int idx = m_points.size();
-                        auto point = std::make_shared<Point>();
-                        point->pos = v;
-                        m_points.push_back(point);
+                        m_points.push_back(std::make_shared<Point>(v));
                         if (!find0) { m_faces[i]->points.push_back(idx); }
                         if (!find1) { m_faces[j]->points.push_back(idx); }
                         if (!find2) { m_faces[k]->points.push_back(idx); }

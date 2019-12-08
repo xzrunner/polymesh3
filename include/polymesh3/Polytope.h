@@ -1,66 +1,48 @@
 #pragma once
 
-#include "polymesh3/typedef.h"
+#include "polymesh3/TexCoord.h"
 
-#include <SM_Vector.h>
 #include <SM_Plane.h>
 #include <halfedge/TopoID.h>
 #include <halfedge/typedef.h>
 
-#include <vector>
-#include <map>
-#include <memory>
-
 namespace pm3
 {
 
-struct Point
-{
-    Point(const sm::vec3& pos, const he::TopoID id = he::TopoID())
-        : pos(pos), topo_id(id)
-    {
-    }
-
-    sm::vec3 pos;
-
-    he::TopoID topo_id;
-
-}; // Point
-
-struct TexCoordSystem
-{
-    size_t   index = 0;
-    sm::vec3 x_axis;
-    sm::vec3 y_axis;
-
-}; // TexCoordSystem
-
-struct TextureMapping
-{
-    std::string tex_name;
-
-    TexCoordSystem sys;
-	sm::vec2 offset;
-	float    angle = 0;
-	sm::vec2 scale;
-
-    sm::vec2 CalcTexCoords(const sm::vec3& pos, float tex_w, float tex_h) const;
-
-}; // TextureMapping
-
-struct Face
-{
-    sm::Plane plane;
-    std::vector<size_t> points;
-
-    TextureMapping tex_map;
-
-    he::TopoID topo_id;
-
-}; // Face
-
 class Polytope
 {
+public:
+    struct Point
+    {
+        Point(const sm::vec3& pos, const he::TopoID id = he::TopoID())
+            : pos(pos), topo_id(id)
+        {
+        }
+
+        sm::vec3 pos;
+
+        he::TopoID topo_id;
+
+    }; // Point
+
+    using PointPtr = std::shared_ptr<Point>;
+
+    struct Face
+    {
+        sm::Plane plane;
+        std::vector<size_t> points;
+
+        TextureMapping tex_map;
+
+        he::TopoID topo_id;
+
+    }; // Face
+
+    using FacePtr = std::shared_ptr<Face>;
+
+    typedef std::pair<size_t, size_t>   EdgeIndex;
+    typedef std::shared_ptr<EdgeIndex>  EdgePtr;
+
 public:
     Polytope() {}
     Polytope(const Polytope& poly);
@@ -69,8 +51,8 @@ public:
     Polytope(const he::PolyhedronPtr& halfedge);
     Polytope& operator = (const Polytope& poly);
 
-    void Build();
-    void BuildFromGeo();
+    void BuildFromFaces();
+    void BuildFromPoly();
 
     auto& Points() { return m_points; }
     auto& Points() const { return m_points; }
@@ -78,7 +60,7 @@ public:
 
     void SetFaces(const std::vector<FacePtr>& faces);
 
-    auto& GetGeometry() const { return m_geo; }
+    auto GetHePoly() const { return m_he_poly; }
 
     void Combine(const Polytope& poly);
 
@@ -100,8 +82,10 @@ private:
     std::vector<PointPtr> m_points;
     std::vector<FacePtr>  m_faces;
 
-    he::PolyhedronPtr m_geo = nullptr;
+    he::PolyhedronPtr m_he_poly = nullptr;
 
 }; // Polytope
+
+using PolytopePtr = std::shared_ptr<Polytope>;
 
 }

@@ -2,6 +2,7 @@
 
 #include <SM_Calc.h>
 #include <halfedge/Polyhedron.h>
+#include <halfedge/Utility.h>
 
 namespace
 {
@@ -81,7 +82,7 @@ void Polytope::BuildFromPoly()
         return;
     }
     m_points.reserve(vertices.Size());
-    std::map<he::Vertex*, size_t> vert2idx;
+    std::map<he::vert3*, size_t> vert2idx;
     auto curr_vert = vertices.Head();
     auto first_vert = curr_vert;
     do {
@@ -99,7 +100,7 @@ void Polytope::BuildFromPoly()
     auto first_face = curr_face;
     do {
         auto face = std::make_shared<Face>();
-        he::face_to_plane(*curr_face, face->plane);
+        he::Utility::face_to_plane(*curr_face, face->plane);
         face->topo_id = curr_face->ids;
         m_faces.push_back(face);
 

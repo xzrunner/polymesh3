@@ -27,7 +27,7 @@ Polytope::Polytope(const Polytope& poly)
     CopyPoints(poly.m_points);
     CopyFaces(poly.m_faces);
 
-    BuildHalfedge();
+    BuildTopoPoly();
 }
 
 Polytope::Polytope(const std::vector<FacePtr>& faces)
@@ -35,7 +35,7 @@ Polytope::Polytope(const std::vector<FacePtr>& faces)
     CopyFaces(faces);
 
     BuildVertices();
-    BuildHalfedge();
+    BuildTopoPoly();
 }
 
 Polytope::Polytope(const std::vector<PointPtr>& points,
@@ -44,13 +44,13 @@ Polytope::Polytope(const std::vector<PointPtr>& points,
     CopyPoints(points);
     CopyFaces(faces);
 
-    BuildHalfedge();
+    BuildTopoPoly();
 }
 
-Polytope::Polytope(const he::PolyhedronPtr& halfedge)
-    : m_he_poly(halfedge)
+Polytope::Polytope(const he::PolyhedronPtr& topo)
+    : m_topo_poly(topo)
 {
-    BuildFromPoly();
+    BuildFromTopo();
 }
 
 Polytope& Polytope::operator = (const Polytope& poly)
@@ -61,7 +61,7 @@ Polytope& Polytope::operator = (const Polytope& poly)
     m_faces.clear();
     CopyFaces(poly.m_faces);
 
-    BuildHalfedge();
+    BuildTopoPoly();
 
     return *this;
 }
@@ -69,15 +69,15 @@ Polytope& Polytope::operator = (const Polytope& poly)
 void Polytope::BuildFromFaces()
 {
     BuildVertices();
-    BuildHalfedge();
+    BuildTopoPoly();
 }
 
-void Polytope::BuildFromPoly()
+void Polytope::BuildFromTopo()
 {
     m_points.clear();
     m_faces.clear();
 
-    auto& vertices = m_he_poly->GetVertices();
+    auto& vertices = m_topo_poly->GetVertices();
     if (vertices.Size() == 0) {
         return;
     }
@@ -94,7 +94,7 @@ void Polytope::BuildFromPoly()
         curr_vert = curr_vert->linked_next;
     } while (curr_vert != first_vert);
 
-    auto& faces = m_he_poly->GetFaces();
+    auto& faces = m_topo_poly->GetFaces();
     m_faces.reserve(faces.Size());
     auto curr_face = faces.Head();
     auto first_face = curr_face;
@@ -148,7 +148,7 @@ void Polytope::Combine(const Polytope& poly)
         m_faces.push_back(face);
     }
 
-    BuildHalfedge();
+    BuildTopoPoly();
 }
 
 void Polytope::CopyPoints(const std::vector<PointPtr>& points)
@@ -216,7 +216,7 @@ void Polytope::BuildVertices()
 	}
 }
 
-void Polytope::BuildHalfedge()
+void Polytope::BuildTopoPoly()
 {
     std::vector<std::pair<he::TopoID, sm::vec3>> vertices;
     vertices.reserve(m_points.size());
@@ -233,10 +233,10 @@ void Polytope::BuildHalfedge()
         faces.push_back({ face->topo_id, points });
     }
 
-	m_he_poly = std::make_shared<he::Polyhedron>(vertices, faces);
+	m_topo_poly = std::make_shared<he::Polyhedron>(vertices, faces);
 
-    assert(m_points.size() == m_he_poly->GetVertices().Size());
-    auto first_vert = m_he_poly->GetVertices().Head();
+    assert(m_points.size() == m_topo_poly->GetVertices().Size());
+    auto first_vert = m_topo_poly->GetVertices().Head();
     auto curr_vert = first_vert;
     size_t idx_vert = 0;
     do {
@@ -247,8 +247,8 @@ void Polytope::BuildHalfedge()
         curr_vert = curr_vert->linked_next;
     } while (curr_vert != first_vert);
 
-    assert(m_faces.size() == m_he_poly->GetFaces().Size());
-    auto first_face = m_he_poly->GetFaces().Head();
+    assert(m_faces.size() == m_topo_poly->GetFaces().Size());
+    auto first_face = m_topo_poly->GetFaces().Head();
     auto curr_face = first_face;
     size_t idx_face = 0;
     do {

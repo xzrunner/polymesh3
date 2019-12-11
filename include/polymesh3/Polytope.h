@@ -48,11 +48,11 @@ public:
     Polytope(const Polytope& poly);
     Polytope(const std::vector<FacePtr>& faces);
     Polytope(const std::vector<PointPtr>& points, const std::vector<FacePtr>& faces);
-    Polytope(const he::PolyhedronPtr& halfedge);
+    Polytope(const he::PolyhedronPtr& topo);
     Polytope& operator = (const Polytope& poly);
 
     void BuildFromFaces();
-    void BuildFromPoly();
+    void BuildFromTopo();
 
     auto& Points() { return m_points; }
     auto& Points() const { return m_points; }
@@ -60,7 +60,7 @@ public:
 
     void SetFaces(const std::vector<FacePtr>& faces);
 
-    auto GetHePoly() const { return m_he_poly; }
+    auto GetTopoPoly() const { return m_topo_poly; }
 
     void Combine(const Polytope& poly);
 
@@ -69,7 +69,7 @@ private:
     void CopyFaces(const std::vector<FacePtr>& faces);
 
     void BuildVertices();
-    void BuildHalfedge();
+    void BuildTopoPoly();
 
     bool IsPosExistInFace(const sm::vec3& pos, const Face& face) const;
 
@@ -82,7 +82,7 @@ private:
     std::vector<PointPtr> m_points;
     std::vector<FacePtr>  m_faces;
 
-    he::PolyhedronPtr m_he_poly = nullptr;
+    he::PolyhedronPtr m_topo_poly = nullptr;
 
 }; // Polytope
 

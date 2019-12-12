@@ -345,10 +345,27 @@ void Polytope::InitFaceTexCoordSys(Face& face)
 sm::vec3 Polytope::CalcFaceNormal(const Face& face) const
 {
     assert(face.points.size() > 2);
-    auto& p0 = m_points[face.points[0]]->pos;
-    auto& p1 = m_points[face.points[1]]->pos;
-    auto& p2 = m_points[face.points[2]]->pos;
-    return (p1 - p0).Cross(p2 - p0).Normalized();
+
+    sm::vec3 invalid;
+    invalid.MakeInvalid();
+    if (face.points.size() < 3) {
+        return invalid;
+    }
+
+    for (size_t i = 0, n = face.points.size(); i < n; ++i)
+    {
+        auto& p0 = m_points[face.points[i]]->pos;
+        auto& p1 = m_points[face.points[(i + 1) % n]]->pos;
+        auto& p2 = m_points[face.points[(i + 2) % n]]->pos;
+
+        auto cross = (p1 - p0).Cross(p2 - p0);
+        if (cross.LengthSquared() > 0) {
+            return cross.Normalized();
+        }
+    }
+
+    assert(0);
+    return invalid;
 }
 
 }

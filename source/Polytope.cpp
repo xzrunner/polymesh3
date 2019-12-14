@@ -77,7 +77,7 @@ void Polytope::BuildFromTopo()
     m_points.clear();
     m_faces.clear();
 
-    auto& vertices = m_topo_poly->GetVertices();
+    auto& vertices = m_topo_poly->GetVerts();
     if (vertices.Size() == 0) {
         return;
     }
@@ -94,13 +94,13 @@ void Polytope::BuildFromTopo()
         curr_vert = curr_vert->linked_next;
     } while (curr_vert != first_vert);
 
-    auto& faces = m_topo_poly->GetFaces();
+    auto& faces = m_topo_poly->GetLoops();
     m_faces.reserve(faces.Size());
     auto curr_face = faces.Head();
     auto first_face = curr_face;
     do {
         auto face = std::make_shared<Face>();
-        he::Utility::FaceToPlane(*curr_face, face->plane);
+        he::Utility::LoopToPlane(*curr_face, face->plane);
         face->topo_id = curr_face->ids;
         m_faces.push_back(face);
 
@@ -229,7 +229,7 @@ void Polytope::BuildTopoPoly()
         verts.push_back({ point->topo_id, point->pos });
     }
 
-    std::vector<he::Polyhedron::in_face2> faces;
+    std::vector<he::Polyhedron::in_face_with_hole> faces;
     faces.reserve(m_faces.size());
     std::vector<size_t> loop_n;
     for (auto& face : m_faces)
@@ -254,8 +254,8 @@ void Polytope::BuildTopoPoly()
 
 	m_topo_poly = std::make_shared<he::Polyhedron>(verts, faces);
 
-    assert(m_points.size() == m_topo_poly->GetVertices().Size());
-    auto first_vert = m_topo_poly->GetVertices().Head();
+    assert(m_points.size() == m_topo_poly->GetVerts().Size());
+    auto first_vert = m_topo_poly->GetVerts().Head();
     auto curr_vert = first_vert;
     size_t idx_vert = 0;
     do {
@@ -267,7 +267,7 @@ void Polytope::BuildTopoPoly()
     } while (curr_vert != first_vert);
 
     assert(loop_n.size() == m_faces.size());
-    auto first_face = m_topo_poly->GetFaces().Head();
+    auto first_face = m_topo_poly->GetLoops().Head();
     auto curr_face = first_face;
     size_t idx_face = 0;
     do {

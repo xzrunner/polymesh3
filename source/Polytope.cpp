@@ -100,7 +100,7 @@ void Polytope::BuildFromTopo()
     auto first_face = curr_face;
     do {
         auto face = std::make_shared<Face>();
-        he::Utility::face_to_plane(*curr_face, face->plane);
+        he::Utility::FaceToPlane(*curr_face, face->plane);
         face->topo_id = curr_face->ids;
         m_faces.push_back(face);
 
@@ -109,7 +109,7 @@ void Polytope::BuildFromTopo()
         do {
             auto itr = vert2idx.find(curr_edge->vert);
             assert(itr != vert2idx.end());
-            face->points.push_back(itr->second);
+            face->border.push_back(itr->second);
 
             curr_edge = curr_edge->prev;
         } while (curr_edge != first_edge);
@@ -142,8 +142,13 @@ void Polytope::Combine(const Polytope& poly)
     for (auto& f : poly.m_faces)
     {
         auto face = std::make_shared<Face>(*f);
-        for (auto& p : face->points) {
+        for (auto& p : face->border) {
             p += offset;
+        }
+        for (auto& hole : face->holes) {
+            for (auto& p : hole) {
+                p += offset;
+            }
         }
         m_faces.push_back(face);
     }
@@ -191,16 +196,16 @@ void Polytope::BuildVertices()
 
 				if (legal)
 				{
-                    bool find0 = IsPosExistInFace(v, *m_faces[i]);
-                    bool find1 = IsPosExistInFace(v, *m_faces[j]);
-                    bool find2 = IsPosExistInFace(v, *m_faces[k]);
+                    bool find0 = IsPosExist(v, *m_faces[i]);
+                    bool find1 = IsPosExist(v, *m_faces[j]);
+                    bool find2 = IsPosExist(v, *m_faces[k]);
 					if (!find0 || !find1 || !find2)
                     {
                         const int idx = m_points.size();
                         m_points.push_back(std::make_shared<Point>(v));
-                        if (!find0) { m_faces[i]->points.push_back(idx); }
-                        if (!find1) { m_faces[j]->points.push_back(idx); }
-                        if (!find2) { m_faces[k]->points.push_back(idx); }
+                        if (!find0) { m_faces[i]->border.push_back(idx); }
+                        if (!find1) { m_faces[j]->border.push_back(idx); }
+                        if (!find2) { m_faces[k]->border.push_back(idx); }
 					}
 				}
 			}
@@ -210,7 +215,7 @@ void Polytope::BuildVertices()
 	// sort vertices
 	for (auto& f : m_faces)
 	{
-		assert(f->points.size() >= 3);
+		assert(f->border.size() >= 3);
         SortFacePoints(*f);
         InitFaceTexCoordSys(*f);
 	}
@@ -218,22 +223,36 @@ void Polytope::BuildVertices()
 
 void Polytope::BuildTopoPoly()
 {
-    std::vector<std::pair<he::TopoID, sm::vec3>> vertices;
-    vertices.reserve(m_points.size());
+    std::vector<he::Polyhedron::in_vert> verts;
+    verts.reserve(m_points.size());
     for (auto& point : m_points) {
-        vertices.push_back({ point->topo_id, point->pos });
+        verts.push_back({ point->topo_id, point->pos });
     }
 
-    std::vector<std::pair<he::TopoID, std::vector<size_t>>> faces;
+    std::vector<he::Polyhedron::in_face2> faces;
     faces.reserve(m_faces.size());
+    std::vector<size_t> loop_n;
     for (auto& face : m_faces)
     {
-        auto points = face->points;
-        std::reverse(points.begin(), points.end());
-        faces.push_back({ face->topo_id, points });
+        he::Polyhedron::in_loop border;
+        std::vector<he::Polyhedron::in_loop> holes;
+
+        border = face->border;
+        std::reverse(border.begin(), border.end());
+
+        holes.reserve(face->holes.size());
+        for (auto& loop : face->holes)
+        {
+            auto r_loop = loop;
+            std::reverse(r_loop.begin(), r_loop.end());
+            holes.push_back(r_loop);
+        }
+
+        faces.push_back({ face->topo_id, border, holes });
+        loop_n.push_back(face->holes.size() + 1);
     }
 
-	m_topo_poly = std::make_shared<he::Polyhedron>(vertices, faces);
+	m_topo_poly = std::make_shared<he::Polyhedron>(verts, faces);
 
     assert(m_points.size() == m_topo_poly->GetVertices().Size());
     auto first_vert = m_topo_poly->GetVertices().Head();
@@ -247,23 +266,36 @@ void Polytope::BuildTopoPoly()
         curr_vert = curr_vert->linked_next;
     } while (curr_vert != first_vert);
 
-    assert(m_faces.size() == m_topo_poly->GetFaces().Size());
+    assert(loop_n.size() == m_faces.size());
     auto first_face = m_topo_poly->GetFaces().Head();
     auto curr_face = first_face;
     size_t idx_face = 0;
     do {
         m_faces[idx_face]->topo_id = curr_face->ids;
 
+        for (size_t i = 0; i < loop_n[idx_face] - 1; ++i) {
+            curr_face = curr_face->linked_next;
+            assert(curr_face != first_face);
+        }
+
         ++idx_face;
+
         curr_face = curr_face->linked_next;
     } while (curr_face != first_face);
 }
 
-bool Polytope::IsPosExistInFace(const sm::vec3& pos, const Face& face) const
+bool Polytope::IsPosExist(const sm::vec3& pos, const Face& face) const
 {
-    for (auto& p : face.points) {
+    for (auto& p : face.border) {
         if (sm::dis_square_pos3_to_pos3(m_points[p]->pos, pos) < SM_LARGE_EPSILON) {
             return true;
+        }
+    }
+    for (auto& hole : face.holes) {
+        for (auto& p : hole) {
+            if (sm::dis_square_pos3_to_pos3(m_points[p]->pos, pos) < SM_LARGE_EPSILON) {
+                return true;
+            }
         }
     }
     return false;
@@ -272,23 +304,23 @@ bool Polytope::IsPosExistInFace(const sm::vec3& pos, const Face& face) const
 void Polytope::SortFacePoints(Face& face)
 {
 	sm::vec3 center;
-	for (auto& v : face.points) {
+	for (auto& v : face.border) {
 		center += m_points[v]->pos;
 	}
-	center /= static_cast<float>(face.points.size());
+	center /= static_cast<float>(face.border.size());
 
-	for (size_t i = 0; i < face.points.size() - 2; ++i)
+	for (size_t i = 0; i < face.border.size() - 2; ++i)
 	{
 		float smallest_angle = -1;
 		int   smallest_idx = -1;
 
-        auto& pos = m_points[face.points[i]]->pos;
+        auto& pos = m_points[face.border[i]]->pos;
 
 		sm::vec3 a = (pos - center).Normalized();
 		sm::Plane p(pos, center, center + face.plane.normal);
-		for (size_t j = i + 1; j < face.points.size(); ++j)
+		for (size_t j = i + 1; j < face.border.size(); ++j)
 		{
-            auto& pos = m_points[face.points[j]]->pos;
+            auto& pos = m_points[face.border[j]]->pos;
 			float dis = p.normal.Dot(pos) + p.dist;
 			// black
 			if (dis < -SM_LARGE_EPSILON) {
@@ -311,14 +343,14 @@ void Polytope::SortFacePoints(Face& face)
 		}
 
 		if (smallest_idx != i + 1) {
-			std::swap(face.points[smallest_idx], face.points[i + 1]);
+			std::swap(face.border[smallest_idx], face.border[i + 1]);
 		}
 	}
 
 	// fix back faces
     sm::vec3 normal = CalcFaceNormal(face);
 	if (normal.Dot(face.plane.normal) < -SM_LARGE_EPSILON) {
-		std::reverse(std::begin(face.points), std::end(face.points));
+		std::reverse(std::begin(face.border), std::end(face.border));
 	}
 }
 
@@ -344,19 +376,19 @@ void Polytope::InitFaceTexCoordSys(Face& face)
 
 sm::vec3 Polytope::CalcFaceNormal(const Face& face) const
 {
-    assert(face.points.size() > 2);
+    assert(face.border.size() > 2);
 
     sm::vec3 invalid;
     invalid.MakeInvalid();
-    if (face.points.size() < 3) {
+    if (face.border.size() < 3) {
         return invalid;
     }
 
-    for (size_t i = 0, n = face.points.size(); i < n; ++i)
+    for (size_t i = 0, n = face.border.size(); i < n; ++i)
     {
-        auto& p0 = m_points[face.points[i]]->pos;
-        auto& p1 = m_points[face.points[(i + 1) % n]]->pos;
-        auto& p2 = m_points[face.points[(i + 2) % n]]->pos;
+        auto& p0 = m_points[face.border[i]]->pos;
+        auto& p1 = m_points[face.border[(i + 1) % n]]->pos;
+        auto& p2 = m_points[face.border[(i + 2) % n]]->pos;
 
         auto cross = (p1 - p0).Cross(p2 - p0);
         if (cross.LengthSquared() > 0) {

@@ -30,7 +30,9 @@ public:
     struct Face
     {
         sm::Plane plane;
-        std::vector<size_t> points;
+
+        std::vector<size_t> border;
+        std::vector<std::vector<size_t>> holes;
 
         TextureMapping tex_map;
 
@@ -71,7 +73,7 @@ private:
     void BuildVertices();
     void BuildTopoPoly();
 
-    bool IsPosExistInFace(const sm::vec3& pos, const Face& face) const;
+    bool IsPosExist(const sm::vec3& pos, const Face& face) const;
 
     void SortFacePoints(Face& face);
     void InitFaceTexCoordSys(Face& face);

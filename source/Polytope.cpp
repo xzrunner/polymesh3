@@ -229,7 +229,7 @@ void Polytope::BuildTopoPoly()
         verts.push_back({ point->topo_id, point->pos });
     }
 
-    std::vector<he::Polyhedron::in_face_with_hole> faces;
+    std::vector<he::Polyhedron::in_face> faces;
     faces.reserve(m_faces.size());
     std::vector<size_t> loop_n;
     for (auto& face : m_faces)

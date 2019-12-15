@@ -77,47 +77,14 @@ void Polytope::BuildFromTopo()
     m_points.clear();
     m_faces.clear();
 
-    auto& vertices = m_topo_poly->GetVerts();
-    if (vertices.Size() == 0) {
-        return;
-    }
-    m_points.reserve(vertices.Size());
     std::map<he::vert3*, size_t> vert2idx;
-    auto curr_vert = vertices.Head();
-    auto first_vert = curr_vert;
-    do {
-        vert2idx.insert({ curr_vert, m_points.size() });
+    BuildPointsFromTopo(vert2idx);
 
-        auto point = std::make_shared<Point>(curr_vert->position, curr_vert->ids);
-        m_points.push_back(point);
-
-        curr_vert = curr_vert->linked_next;
-    } while (curr_vert != first_vert);
-
-    auto& faces = m_topo_poly->GetLoops();
-    m_faces.reserve(faces.Size());
-    auto curr_face = faces.Head();
-    auto first_face = curr_face;
-    do {
-        auto face = std::make_shared<Face>();
-        he::Utility::LoopToPlane(*curr_face, face->plane);
-        face->topo_id = curr_face->ids;
-        m_faces.push_back(face);
-
-        auto curr_edge = curr_face->edge;
-        auto first_edge = curr_edge;
-        do {
-            auto itr = vert2idx.find(curr_edge->vert);
-            assert(itr != vert2idx.end());
-            face->border.push_back(itr->second);
-
-            curr_edge = curr_edge->prev;
-        } while (curr_edge != first_edge);
-
-        // todo tex_map
-
-        curr_face = curr_face->linked_next;
-    } while (curr_face != first_face);
+    auto& faces = m_topo_poly->GetFaces();
+    m_faces.reserve(faces.size());
+    for (auto& face : faces) {
+        m_faces.push_back(BuildFaceFromTopo(face, vert2idx));
+    }
 }
 
 void Polytope::SetFaces(const std::vector<FacePtr>& faces)
@@ -154,6 +121,62 @@ void Polytope::Combine(const Polytope& poly)
     }
 
     BuildTopoPoly();
+}
+
+void Polytope::BuildPointsFromTopo(std::map<he::vert3*, size_t>& vert2idx)
+{
+    auto& vertices = m_topo_poly->GetVerts();
+    if (vertices.Size() == 0) {
+        return;
+    }
+    m_points.reserve(vertices.Size());
+
+    auto curr_vert = vertices.Head();
+    auto first_vert = curr_vert;
+    do {
+        vert2idx.insert({ curr_vert, m_points.size() });
+
+        auto point = std::make_shared<Point>(curr_vert->position, curr_vert->ids);
+        m_points.push_back(point);
+
+        curr_vert = curr_vert->linked_next;
+    } while (curr_vert != first_vert);
+}
+
+std::vector<size_t> Polytope::BuildLoopFromTopo(const he::loop3& loop, const std::map<he::vert3*, size_t>& vert2idx)
+{
+    std::vector<size_t> ret;
+
+    auto first_e = loop.edge;
+    auto curr_e = first_e;
+    do {
+        auto itr = vert2idx.find(curr_e->vert);
+        assert(itr != vert2idx.end());
+        ret.push_back(itr->second);
+
+        curr_e = curr_e->prev;
+    } while (curr_e != first_e);
+
+    return ret;
+}
+
+Polytope::FacePtr Polytope::BuildFaceFromTopo(const he::Polyhedron::Face& face, const std::map<he::vert3*, size_t>& vert2idx)
+{
+    auto ret = std::make_shared<Face>();
+
+    he::Utility::LoopToPlane(*face.border, ret->plane);
+
+    ret->border = BuildLoopFromTopo(*face.border, vert2idx);
+    ret->holes.reserve(face.holes.size());
+    for (auto& hole : face.holes) {
+        ret->holes.push_back(BuildLoopFromTopo(*hole, vert2idx));
+    }
+
+    // todo tex_map
+
+    ret->topo_id = face.border->ids;
+
+    return ret;
 }
 
 void Polytope::CopyPoints(const std::vector<PointPtr>& points)

@@ -5,6 +5,10 @@
 #include <SM_Plane.h>
 #include <halfedge/TopoID.h>
 #include <halfedge/typedef.h>
+#include <halfedge/HalfEdge.h>
+#include <halfedge/Polyhedron.h>
+
+#include <map>
 
 namespace pm3
 {
@@ -67,6 +71,12 @@ public:
     void Combine(const Polytope& poly);
 
 private:
+    void BuildPointsFromTopo(std::map<he::vert3*, size_t>& vert2idx);
+    std::vector<size_t> BuildLoopFromTopo(const he::loop3& loop,
+        const std::map<he::vert3*, size_t>& vert2idx);
+    FacePtr BuildFaceFromTopo(const he::Polyhedron::Face& face,
+        const std::map<he::vert3*, size_t>& vert2idx);
+
     void CopyPoints(const std::vector<PointPtr>& points);
     void CopyFaces(const std::vector<FacePtr>& faces);
 

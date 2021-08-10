@@ -66,10 +66,11 @@ public:
 
     void SetFaces(const std::vector<FacePtr>& faces);
 
-    auto GetTopoPoly() const { return m_topo_poly; }
+    void SetTopoDirty() { m_topo_dirty = true; }
+    he::PolyhedronPtr GetTopoPoly();
 
     void Combine(const Polytope& poly);
-
+    
 private:
     void BuildPointsFromTopo(std::map<he::vert3*, size_t>& vert2idx);
     std::vector<size_t> BuildLoopFromTopo(const he::loop3& loop,
@@ -95,6 +96,7 @@ private:
     std::vector<FacePtr>  m_faces;
 
     he::PolyhedronPtr m_topo_poly = nullptr;
+    bool m_topo_dirty = true;
 
 }; // Polytope
 

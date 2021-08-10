@@ -27,7 +27,7 @@ Polytope::Polytope(const Polytope& poly)
     CopyPoints(poly.m_points);
     CopyFaces(poly.m_faces);
 
-    BuildTopoPoly();
+    SetTopoDirty();
 }
 
 Polytope::Polytope(const std::vector<FacePtr>& faces)
@@ -35,7 +35,8 @@ Polytope::Polytope(const std::vector<FacePtr>& faces)
     CopyFaces(faces);
 
     BuildVertices();
-    BuildTopoPoly();
+
+    SetTopoDirty();
 }
 
 Polytope::Polytope(const std::vector<PointPtr>& points,
@@ -44,7 +45,7 @@ Polytope::Polytope(const std::vector<PointPtr>& points,
     CopyPoints(points);
     CopyFaces(faces);
 
-    BuildTopoPoly();
+    SetTopoDirty();
 
     for (auto& face : m_faces) {
         face->plane.normal = CalcFaceNormal(*face);
@@ -65,7 +66,7 @@ Polytope& Polytope::operator = (const Polytope& poly)
     m_faces.clear();
     CopyFaces(poly.m_faces);
 
-    BuildTopoPoly();
+    SetTopoDirty();
 
     return *this;
 }
@@ -73,7 +74,8 @@ Polytope& Polytope::operator = (const Polytope& poly)
 void Polytope::BuildFromFaces()
 {
     BuildVertices();
-    BuildTopoPoly();
+
+    SetTopoDirty();
 }
 
 void Polytope::BuildFromTopo()
@@ -97,6 +99,15 @@ void Polytope::SetFaces(const std::vector<FacePtr>& faces)
     CopyFaces(faces);
 
     BuildFromFaces();
+}
+
+he::PolyhedronPtr Polytope::GetTopoPoly() 
+{
+    if (m_topo_dirty) {
+        BuildTopoPoly();
+        m_topo_dirty = false;
+    }
+    return m_topo_poly; 
 }
 
 void Polytope::Combine(const Polytope& poly)
@@ -124,7 +135,7 @@ void Polytope::Combine(const Polytope& poly)
         m_faces.push_back(face);
     }
 
-    BuildTopoPoly();
+    SetTopoDirty();
 }
 
 void Polytope::BuildPointsFromTopo(std::map<he::vert3*, size_t>& vert2idx)

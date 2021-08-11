@@ -46,10 +46,6 @@ Polytope::Polytope(const std::vector<PointPtr>& points,
     CopyFaces(faces);
 
     SetTopoDirty();
-
-    for (auto& face : m_faces) {
-        face->plane.normal = CalcFaceNormal(*face);
-    }
 }
 
 Polytope::Polytope(const he::PolyhedronPtr& topo)

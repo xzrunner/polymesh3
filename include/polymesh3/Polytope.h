@@ -70,6 +70,8 @@ public:
     he::PolyhedronPtr GetTopoPoly();
 
     void Combine(const Polytope& poly);
+
+    bool CalcFacePlane(const Face& face, sm::Plane& plane) const;
     
 private:
     void BuildPointsFromTopo(std::map<he::vert3*, size_t>& vert2idx);

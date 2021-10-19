@@ -134,6 +134,30 @@ void Polytope::Combine(const Polytope& poly)
     SetTopoDirty();
 }
 
+bool Polytope::CalcFacePlane(const Polytope::Face& face, sm::Plane& plane) const
+{
+    if (face.border.size() < 3) {
+        return false;
+    }
+
+    for (size_t i = 0, n = face.border.size(); i < n; ++i)
+    {
+        auto& p0 = m_points[face.border[i]]->pos;
+        auto& p1 = m_points[face.border[(i + 1) % n]]->pos;
+        auto& p2 = m_points[face.border[(i + 2) % n]]->pos;
+
+        auto angle = sm::get_angle(p1, p0, p2);
+        if (angle > std::numeric_limits<float>::epsilon() &&
+            angle < SM_PI - std::numeric_limits<float>::epsilon()) {
+            plane.Build(p0, p1, p2);
+            plane.Flip();
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void Polytope::BuildPointsFromTopo(std::map<he::vert3*, size_t>& vert2idx)
 {
     auto& vertices = m_topo_poly->GetVerts();

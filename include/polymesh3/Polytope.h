@@ -72,7 +72,9 @@ public:
     void Combine(const Polytope& poly);
 
     bool CalcFacePlane(const Face& face, sm::Plane& plane) const;
-    
+  
+    void SortVertices();
+
 private:
     void BuildPointsFromTopo(std::map<he::vert3*, size_t>& vert2idx);
     std::vector<size_t> BuildLoopFromTopo(const he::loop3& loop,

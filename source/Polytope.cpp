@@ -158,6 +158,16 @@ bool Polytope::CalcFacePlane(const Polytope::Face& face, sm::Plane& plane) const
     return false;
 }
 
+void Polytope::SortVertices()
+{
+    for (auto& f : m_faces)
+    {
+        assert(f->border.size() >= 3);
+        SortFacePoints(*f);
+        InitFaceTexCoordSys(*f);
+    }
+}
+
 void Polytope::BuildPointsFromTopo(std::map<he::vert3*, size_t>& vert2idx)
 {
     auto& vertices = m_topo_poly->GetVerts();
@@ -270,13 +280,7 @@ void Polytope::BuildVertices()
 		}
 	}
 
-	// sort vertices
-	for (auto& f : m_faces)
-	{
-		assert(f->border.size() >= 3);
-        SortFacePoints(*f);
-        InitFaceTexCoordSys(*f);
-	}
+    SortVertices();
 }
 
 void Polytope::BuildTopoPoly()

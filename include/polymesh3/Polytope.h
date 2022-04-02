@@ -71,7 +71,7 @@ public:
 
     void Combine(const Polytope& poly);
 
-    bool CalcFacePlane(const Face& face, sm::Plane& plane) const;
+    bool CalcFaceNormal(const Face& face, sm::vec3& normal) const;
   
     void SortVertices();
 

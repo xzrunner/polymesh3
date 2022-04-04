@@ -23,6 +23,7 @@ struct TextureMapping
 	sm::vec2 offset;
 	float    angle = 0;
 	sm::vec2 scale;
+	float    uw_factor = 0;
 
     sm::vec2 CalcTexCoords(const sm::vec3& pos, float tex_w, float tex_h) const
     {
@@ -38,6 +39,12 @@ struct TextureMapping
 
 	    ret.x = (pos.Dot(sys.x_axis / sx) + offset.x) / tex_w;
 	    ret.y = (pos.Dot(sys.y_axis / sy) + offset.y) / tex_h;
+
+		if (uw_factor != 0) {
+			auto z_axis = sys.x_axis.Cross(sys.y_axis);
+			ret.x += pos.Dot(z_axis * uw_factor) / tex_w;
+			ret.y += pos.Dot(z_axis * uw_factor) / tex_h;
+		}
 
 	    return ret;
     }

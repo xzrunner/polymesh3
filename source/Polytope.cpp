@@ -250,7 +250,7 @@ void Polytope::BuildVertices()
 				bool legal = true;
 				for (auto& f : m_faces) {
 					// plane front, outside
-					if (f->plane.normal.Dot(v) + f->plane.dist > SM_LARGE_EPSILON) {
+					if (f->plane.GetDistance(v) > SM_LARGE_EPSILON) {
 						legal = false;
 						break;
 					}
@@ -377,7 +377,7 @@ void Polytope::SortFacePoints(Face& face)
 		for (size_t j = i + 1; j < face.border.size(); ++j)
 		{
             auto& pos = m_points[face.border[j]]->pos;
-			float dis = p.normal.Dot(pos) + p.dist;
+            float dis = p.GetDistance(pos);
 			// black
 			if (dis < -SM_LARGE_EPSILON) {
 				;

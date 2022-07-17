@@ -75,6 +75,8 @@ public:
   
     void SortVertices();
 
+    void InitFaceTexCoordSys(Face& face);
+
 private:
     void BuildPointsFromTopo(std::map<he::vert3*, size_t>& vert2idx);
     std::vector<size_t> BuildLoopFromTopo(const he::loop3& loop,
@@ -91,7 +93,6 @@ private:
     bool IsPosExist(const sm::vec3& pos, const Face& face) const;
 
     void SortFacePoints(Face& face);
-    void InitFaceTexCoordSys(Face& face);
 
     sm::vec3 CalcFaceNormal(const Face& face) const;
 

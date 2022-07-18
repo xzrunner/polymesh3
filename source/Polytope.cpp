@@ -193,7 +193,7 @@ std::vector<size_t> Polytope::BuildLoopFromTopo(const he::loop3& loop, const std
         assert(itr != vert2idx.end());
         ret.push_back(itr->second);
 
-        curr_e = curr_e->prev;
+        curr_e = curr_e->next;
     } while (curr_e != first_e);
 
     return ret;
@@ -294,14 +294,10 @@ void Polytope::BuildTopoPoly()
         std::vector<he::Polyhedron::in_loop> holes;
 
         border = face->border;
-        std::reverse(border.begin(), border.end());
 
         holes.reserve(face->holes.size());
-        for (auto& loop : face->holes)
-        {
-            auto r_loop = loop;
-            std::reverse(r_loop.begin(), r_loop.end());
-            holes.push_back(r_loop);
+        for (auto& loop : face->holes) {
+            holes.push_back(loop);
         }
 
         faces.push_back({ face->topo_id, border, holes });

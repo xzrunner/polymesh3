@@ -101,7 +101,6 @@ he::PolyhedronPtr Polytope::GetTopoPoly()
 {
     if (m_topo_dirty) {
         BuildTopoPoly();
-        m_topo_dirty = false;
     }
     return m_topo_poly; 
 }
@@ -334,6 +333,8 @@ void Polytope::BuildTopoPoly()
 
         curr_face = curr_face->linked_next;
     } while (curr_face != first_face);
+
+    m_topo_dirty = false;
 }
 
 bool Polytope::IsPosExist(const sm::vec3& pos, const Face& face) const

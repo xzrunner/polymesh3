@@ -101,7 +101,7 @@ private:
     std::vector<FacePtr>  m_faces;
 
     he::PolyhedronPtr m_topo_poly = nullptr;
-    bool m_topo_dirty = true;
+    bool m_topo_dirty = false;
 
 }; // Polytope
 

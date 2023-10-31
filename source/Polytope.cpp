@@ -155,6 +155,9 @@ void Polytope::SortVertices()
 {
     for (auto& f : m_faces)
     {
+        if (f->border.empty()) {
+            continue;
+        }
         assert(f->border.size() >= 3);
         SortFacePoints(*f);
         InitFaceTexCoordSys(*f);
@@ -278,6 +281,10 @@ void Polytope::BuildVertices()
 
 void Polytope::BuildTopoPoly()
 {
+    if (m_points.empty() || m_faces.empty()) {
+        return;
+    }
+
     std::vector<he::Polyhedron::in_vert> verts;
     verts.reserve(m_points.size());
     for (auto& point : m_points) {

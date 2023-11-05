@@ -21,11 +21,15 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\include\polymesh3\MeshBuilder.h" />
     <ClInclude Include="..\..\..\include\polymesh3\Polytope.h" />
+    <ClInclude Include="..\..\..\include\polymesh3\PolytopeAlgos.h" />
     <ClInclude Include="..\..\..\include\polymesh3\TexCoord.h" />
+    <ClInclude Include="..\..\..\include\polymesh3\TopoPolyAdapter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\MeshBuilder.cpp" />
     <ClCompile Include="..\..\..\source\Polytope.cpp" />
+    <ClCompile Include="..\..\..\source\PolytopeAlgos.cpp" />
+    <ClCompile Include="..\..\..\source\TopoPolyAdapter.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>polymesh3</ProjectName>
@@ -85,7 +89,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../../../include;../../../../glslang;../../../../SPIRV-Cross;../../../../DirectXShaderCompiler/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;NO_BOOST</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -99,7 +103,7 @@
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>../../../include;../../../../glslang;../../../../SPIRV-Cross;../../../../DirectXShaderCompiler/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;__STDC_LIMIT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;NO_BOOST</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader />
@@ -113,13 +117,13 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <PreprocessorDefinitions>_DEBUG;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;NO_BOOST</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\..\include;..\..\..\..\sm;..\..\..\..\halfedge\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;NO_BOOST</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

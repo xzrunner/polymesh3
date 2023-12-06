@@ -148,8 +148,6 @@ PolytopeAlgos::SubtractImpl(const std::vector<PolytopePtr>& a,
             auto intersect = topo_a->Intersect(*topo_b);
             if (intersect && intersect->GetLoops().Size() > 0)
             {
-                auto poly = std::make_shared<Polytope>(intersect);
-
                 auto a_left = a;
                 for (auto itr = a_left.begin(); itr != a_left.end(); ++itr) {
                     if (*itr == pa) {
@@ -160,18 +158,6 @@ PolytopeAlgos::SubtractImpl(const std::vector<PolytopePtr>& a,
                 auto a_sub = topo_a->Subtract(*topo_b);
                 for (auto& p : a_sub) {
                     a_left.push_back(std::make_shared<Polytope>(p));
-                }
-
-                auto b_left = b;
-                for (auto itr = b_left.begin(); itr != b_left.end(); ++itr) {
-                    if (*itr == pb) {
-                        b_left.erase(itr);
-                        break;
-                    }
-                }
-                auto b_sub = topo_b->Subtract(*topo_b);
-                for (auto& p : b_sub) {
-                    b_left.push_back(std::make_shared<Polytope>(p));
                 }
 
                 return Subtract(a_left, b_left);

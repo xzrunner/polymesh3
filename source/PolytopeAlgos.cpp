@@ -10,8 +10,8 @@ namespace pm3
 {
 
 std::vector<PolytopePtr>
-PolytopeAlgos::Intersect(const std::vector<PolytopePtr>& a,
-	                     const std::vector<PolytopePtr>& b)
+PolytopeAlgos::Intersect(const std::vector<PolytopePtr>& a, const std::vector<PolytopePtr>& b,
+                         std::vector<std::pair<PolytopePtr, PolytopePtr>>& hist)
 {
     std::vector<PolytopePtr> ret;
     for (auto& pa : a)
@@ -28,8 +28,11 @@ PolytopeAlgos::Intersect(const std::vector<PolytopePtr>& a,
             }
 
             auto poly = topo_a->Intersect(*topo_b);
-            if (poly && poly->GetLoops().Size() > 0) {
-                ret.push_back(std::make_shared<Polytope>(poly));
+            if (poly && poly->GetLoops().Size() > 0) 
+            {
+                auto dst = std::make_shared<Polytope>(poly);
+                hist.push_back({ pa, dst });
+                ret.push_back(dst);
             }
         }
     }
@@ -37,27 +40,27 @@ PolytopeAlgos::Intersect(const std::vector<PolytopePtr>& a,
 }
 
 std::vector<PolytopePtr>
-PolytopeAlgos::Subtract(const std::vector<PolytopePtr>& a, 
-                        const std::vector<PolytopePtr>& b)
+PolytopeAlgos::Subtract(const std::vector<PolytopePtr>& a, const std::vector<PolytopePtr>& b,
+                        std::vector<std::pair<PolytopePtr, PolytopePtr>>& hist)
 {
     std::vector<PolytopePtr> polytopes = a;
     for (auto& cb : b)
     {
-        auto intersect = PolytopeAlgos::Intersect(polytopes, { cb });
+        auto intersect = PolytopeAlgos::Intersect(polytopes, { cb }, hist);
         if (!intersect.empty()) {
-            polytopes = PolytopeAlgos::SubtractImpl(polytopes, intersect);
+            polytopes = PolytopeAlgos::SubtractImpl(polytopes, intersect, hist);
         }
     }
     return polytopes;
 }
 
 std::vector<PolytopePtr>
-PolytopeAlgos::Union(const std::vector<PolytopePtr>& a,
-                     const std::vector<PolytopePtr>& b)
+PolytopeAlgos::Union(const std::vector<PolytopePtr>& a, const std::vector<PolytopePtr>& b,
+                     std::vector<std::pair<PolytopePtr, PolytopePtr>>& hist)
 {
     std::vector<PolytopePtr> polytopes;
 
-    auto intersect = PolytopeAlgos::Intersect(a, b);
+    auto intersect = PolytopeAlgos::Intersect(a, b, hist);
     if (intersect.empty())
     {
         std::copy(a.begin(), a.end(), std::back_inserter(polytopes));
@@ -65,8 +68,8 @@ PolytopeAlgos::Union(const std::vector<PolytopePtr>& a,
     }
     else
     {
-        auto a_left = PolytopeAlgos::Subtract(a, intersect);
-        auto b_left = PolytopeAlgos::Subtract(b, intersect);
+        auto a_left = PolytopeAlgos::Subtract(a, intersect, hist);
+        auto b_left = PolytopeAlgos::Subtract(b, intersect, hist);
         polytopes = intersect;
         std::copy(a_left.begin(), a_left.end(), std::back_inserter(polytopes));
         std::copy(b_left.begin(), b_left.end(), std::back_inserter(polytopes));
@@ -128,8 +131,8 @@ PolytopePtr PolytopeAlgos::Offset(const PolytopePtr& poly, int keep, float dist)
 }
 
 std::vector<PolytopePtr>
-PolytopeAlgos::SubtractImpl(const std::vector<PolytopePtr>& a,
-                            const std::vector<PolytopePtr>& b)
+PolytopeAlgos::SubtractImpl(const std::vector<PolytopePtr>& a, const std::vector<PolytopePtr>& b,
+                            std::vector<std::pair<PolytopePtr, PolytopePtr>>& hist)
 {
     std::vector<PolytopePtr> ret = a;
     for (auto& pa : a)
@@ -156,11 +159,14 @@ PolytopeAlgos::SubtractImpl(const std::vector<PolytopePtr>& a,
                     }
                 }
                 auto a_sub = topo_a->Subtract(*topo_b);
-                for (auto& p : a_sub) {
-                    a_left.push_back(std::make_shared<Polytope>(p));
+                for (auto& p : a_sub) 
+                {
+                    auto dst = std::make_shared<Polytope>(p);
+                    hist.push_back({ pa, dst });
+                    a_left.push_back(dst);
                 }
 
-                return Subtract(a_left, b_left);
+                return Subtract(a_left, b, hist);
             }
         }
     }

@@ -1,5 +1,0 @@
-polymesh3/
-projects/*
-
-!projects/*.vcxproj
-!projects/*.vcxproj.filters

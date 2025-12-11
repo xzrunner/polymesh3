@@ -1,3 +1,6 @@
 [submodule "external/halfedge"]
 	path = external/halfedge
 	url = git@github.com:xzrunner/halfedge.git
+[submodule "external/sm"]
+	path = external/sm
+	url = git@github.com:xzrunner/sm.git

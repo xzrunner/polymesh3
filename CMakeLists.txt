@@ -31,9 +31,6 @@ set(ALL_FILES
     ${tools}
 )
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(..)
-include_directories(../sm)
-include_directories(../halfedge/include)
+add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
 
-add_library(polymesh3 ${ALL_FILES})
+target_include_directories(${PROJECT_NAME} PRIVATE include external/sm external/halfedge/include)
